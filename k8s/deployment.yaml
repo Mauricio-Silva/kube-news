@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devopsdatabase
+spec:
+  selector:
+    matchLabels:
+      app: devopsdatabase
+  template:
+    metadata:
+      labels:
+        app: devopsdatabase
+    spec:
+      containers:
+        - name: devopsdatabase
+          image: postgres:15.0
+          ports:
+          - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: kubenews
+            - name: POSTGRES_USER
+              value: root
+            - name: POSTGRES_PASSWORD
+              value: admin
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: devopsdatabase
+spec:
+  selector:
+    app: devopsdatabase
+  ports:
+    - port: 5432
+  type: ClusterIP
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devopsweb
+spec:
+  selector:
+    matchLabels:
+      app: devopsweb
+  template:
+    metadata:
+      labels:
+        app: devopsweb
+    spec:
+      containers:
+        - name: devopsweb
+          image: silvamauricio/kube-news:v1
+          ports:
+          - containerPort: 8080
+          env:
+            - name: DB_DATABASE
+              value: kubenews
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: admin
+            - name: DB_HOST
+              value: devopsdatabase
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: devopsweb
+spec:
+  selector:
+    app: devopsweb
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30000
+  type: NodePort
